@@ -24,8 +24,19 @@ def create_table(conn: sqlite3.Connection) -> None:
     - (symbol, date) is the PRIMARY KEY, so the same day can't be stored twice.
     - Calling it twice must not fail.
     """
-    # TODO (Block 2, step 1)
-    raise NotImplementedError
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS prices (
+            symbol    TEXT,
+            date      TEXT,
+            open      REAL,
+            high      REAL,
+            low       REAL,
+            close     REAL,
+            adj_close REAL,
+            volume    INTEGER,
+            PRIMARY KEY (symbol, date)
+        )
+    """)
 
 
 def save_prices(conn: sqlite3.Connection, df: pd.DataFrame) -> int:
@@ -35,8 +46,11 @@ def save_prices(conn: sqlite3.Connection, df: pd.DataFrame) -> int:
     - Use ? placeholders for values, never f-strings (look up "SQL injection").
     - Commit, then return how many new rows were actually inserted.
     """
-    # TODO (Block 2, step 2)
-    raise NotImplementedError
+    sql = "INSERT OR IGNORE INTO prices VALUES(?,?,?,?,?,?,?,?)"                                                    # see below
+    rows = df[PRICE_COLUMNS].itertuples(index=False, name=None)  # each row as a plain tuple
+    cursor = conn.executemany(sql, rows)                         # runs the SQL once per row
+    conn.commit()
+    return cursor.rowcount                                                   # see below
 
 
 def load_prices(
@@ -51,5 +65,14 @@ def load_prices(
     - start_date / end_date ('YYYY-MM-DD') are optional and inclusive.
     - Do the filtering and sorting in SQL (WHERE, ORDER BY), not in pandas.
     """
-    # TODO (Block 2, step 3)
-    raise NotImplementedError
+    sql = "SELECT * FROM prices WHERE symbol = ?"
+    values = [symbol]
+    if start_date is not None:
+        sql += " AND date >= ?"
+        values.append(start_date)
+    if end_date is not None:
+        sql += "AND date <= ?"
+        values.append(end_date)                          # the same idea, but with <=
+    sql += " ORDER BY date"           # which column? oldest first is the default order
+    df = pd.read_sql_query(sql, conn, params=values)
+    return df[PRICE_COLUMNS]
