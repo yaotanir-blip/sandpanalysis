@@ -62,7 +62,7 @@ def fetch_prices(
     url = f"{config.API_BASE_URL}/{symbol}/prices"
     params = {"startDate":start_date}
     if end_date is not None:
-        params["enddDate"]=end_date
+        params["endDate"]=end_date
     headers = {"Authorization":f"Token {api_key}"}
 
     # 3. Up to max_retries attempts

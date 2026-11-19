@@ -16,13 +16,24 @@ log = logging.getLogger("run_fetch")
 
 
 def main():
-    # TODO:
-    # 1. Fetch the raw rows for config.SYMBOL from config.START_DATE.
-    # 2. Parse them into a DataFrame.
-    # 3. Run find_problems on it and log each problem as a warning (don't stop: look at them).
-    # 4. Make sure config.DATA_DIR exists, connect to config.DB_PATH and create the table.
-    # 5. Save the prices and log how many new rows were inserted.
-    raise NotImplementedError
+    # 1. Fetch
+    rows = fetch_prices(config.SYMBOL,config.START_DATE,)                 # config.SYMBOL and config.START_DATE
+    log.info("Fetched %d rows", len(rows))
+
+    # 2. Parse
+    df = parse_prices(rows,config.SYMBOL)                                 # the same call as in your Python shell test
+
+    # 3. Data checks: added in Block 3
+
+    # 4. Database
+    config.DATA_DIR.mkdir(exist_ok=True)     # creates data/ if missing; fine if it already exists
+    conn = connect(config.DB_PATH)
+    create_table(conn)
+
+    # 5. Save
+    inserted = save_prices(conn,df)                           # save_prices returns the number of new rows
+    log.info("Inserted %d new rows into %s", inserted, config.DB_PATH)
+    conn.close()
 
 
 if __name__ == "__main__":
