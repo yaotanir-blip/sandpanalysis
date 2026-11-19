@@ -69,5 +69,28 @@ def parse_prices(rows: list[dict], symbol: str) -> pd.DataFrame:
 
     Look at tests/fixtures/sample_response.json to see the API's field names.
     """
-    # TODO (Block 1, step 2)
-    raise NotImplementedError
+        # 1. Empty input: return an empty table that still has the right columns
+    if not rows:
+        return pd.DataFrame(columns=PRICE_COLUMNS)
+
+    # 2. List of dicts -> DataFrame (one column per key)
+    df = pd.DataFrame(rows)
+
+    # 3. Rename Tiingo's field to ours: adjClose -> adj_close
+    df = df.rename(columns={"adjClose": "adj_close"})
+
+    # 4. Add the symbol column (the same value on every row)
+    df["symbol"] = symbol
+
+    # 5. Keep only the date part: "2024-01-02T00:00:00.000Z" -> "2024-01-02"
+    df["date"] = df["date"].str[:10]
+
+    # 6. Set the types: prices as float, volume as int
+    price_cols = ["open", "high", "low", "close", "adj_close"]
+    df[price_cols] = df[price_cols].astype(float)
+    df["volume"] = df["volume"].astype(int)
+
+    # 7. Keep only our columns, in order; oldest first; fresh 0..n-1 index
+    df = df[PRICE_COLUMNS]
+    df = df.sort_values("date").reset_index(drop=True)
+    return df
