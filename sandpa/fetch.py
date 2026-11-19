@@ -52,9 +52,38 @@ def fetch_prices(
     `session` lets the tests pass a fake object with a .get() method.
     If it's None, use requests.Session().
     """
-    # TODO (Block 1, step 3)
-    raise NotImplementedError
+        # 1. Defaults
+    if session is None:
+        session = requests.Session()         # a real requests.Session()
+    if api_key is None:
+        api_key = config.get_api_key()          # from config
 
+    # 2. Build the request (same as explore_api.py, but using the function's inputs)
+    url = f"{config.API_BASE_URL}/{symbol}/prices"
+    params = {"startDate":start_date}
+    if end_date is not None:
+        params["enddDate"]=end_date
+    headers = {"Authorization":f"Token {api_key}"}
+
+    # 3. Up to max_retries attempts
+    for attempt in range(max_retries):          # attempt = 0, 1, 2, ...
+        try:
+            response = session.get(url, params=params, headers=headers, timeout=timeout)
+        except (requests.Timeout, requests.ConnectionError) as err:
+            log.warning('Attempt %d failed: %s',attempt+1,err)                    # which attempt failed, and err
+        else:                                   # runs only if no exception happened
+            # 4. Decide based on the status code
+            if response.status_code == 200:
+                return response.json()
+            if response.status_code not in RETRY_STATUS_CODES:
+                raise FetchError(f'Failed with status{response.status_code}:{response.text}')           # include the status code and response.text
+            log.warning('Attempt %d got status %d, retrying',attempt+1,response.status_code)                    # a retryable status: say which one
+
+        # 5. Wait before the next attempt: backoff * 2 ** attempt seconds
+        time.sleep(backoff * 2** attempt)
+
+    # 6. Every attempt failed
+    raise FetchError(f'Gave up after {max_retries} attempts')
 
 def parse_prices(rows: list[dict], symbol: str) -> pd.DataFrame:
     """Turn the API's JSON rows into a tidy DataFrame.
@@ -69,28 +98,16 @@ def parse_prices(rows: list[dict], symbol: str) -> pd.DataFrame:
 
     Look at tests/fixtures/sample_response.json to see the API's field names.
     """
-        # 1. Empty input: return an empty table that still has the right columns
+
     if not rows:
         return pd.DataFrame(columns=PRICE_COLUMNS)
-
-    # 2. List of dicts -> DataFrame (one column per key)
     df = pd.DataFrame(rows)
-
-    # 3. Rename Tiingo's field to ours: adjClose -> adj_close
     df = df.rename(columns={"adjClose": "adj_close"})
-
-    # 4. Add the symbol column (the same value on every row)
     df["symbol"] = symbol
-
-    # 5. Keep only the date part: "2024-01-02T00:00:00.000Z" -> "2024-01-02"
     df["date"] = df["date"].str[:10]
-
-    # 6. Set the types: prices as float, volume as int
     price_cols = ["open", "high", "low", "close", "adj_close"]
     df[price_cols] = df[price_cols].astype(float)
     df["volume"] = df["volume"].astype(int)
-
-    # 7. Keep only our columns, in order; oldest first; fresh 0..n-1 index
     df = df[PRICE_COLUMNS]
     df = df.sort_values("date").reset_index(drop=True)
     return df
