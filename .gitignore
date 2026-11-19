@@ -1,0 +1,16 @@
+# Secrets: never commit your API key
+.env
+
+# Data from the API: the free plan is for internal use, so don't publish it
+data/*
+!data/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+venv/
+
+# macOS
+.DS_Store
