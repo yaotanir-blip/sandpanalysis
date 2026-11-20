@@ -24,6 +24,12 @@ def main():
     df = parse_prices(rows,config.SYMBOL)                                 # the same call as in your Python shell test
 
     # 3. Data checks: added in Block 3
+   
+    problems = find_problems(df)                       # run find_problems on df
+    for problem in problems:
+        log.warning("Data check: %s",problem)                 # e.g. "Data check: %s", problem
+    if not problems:                     # an empty list counts as False
+        log.info("All checks passed ")                    # say the checks passed
 
     # 4. Database
     config.DATA_DIR.mkdir(exist_ok=True)     # creates data/ if missing; fine if it already exists
