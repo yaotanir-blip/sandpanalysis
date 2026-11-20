@@ -14,8 +14,8 @@ def daily_returns(prices: pd.Series) -> pd.Series:
 
     Same index as prices. The first value is NaN.
     """
-    # TODO (Block 4, step 1)
-    raise NotImplementedError
+    change = prices / prices.shift(1) - 1 
+    return change
 
 
 def streak_lengths(returns: pd.Series) -> tuple[list[int], list[int]]:
@@ -25,14 +25,41 @@ def streak_lengths(returns: pd.Series) -> tuple[list[int], list[int]]:
     A NaN or a return of exactly 0 ends the current run and isn't counted itself.
     The run still going on the last day counts.
     """
-    # TODO (Block 4, step 2)
-    raise NotImplementedError
+    up_lengths, down_lengths = [], []
+    up = down = 0                        # length of the current up run and down run
+
+    for r in returns:
+        if r > 0:                        # an up day
+            if down > 0:                 # so a down run has just ended: save it
+                down_lengths.append(down)
+                down = 0
+            up += 1
+        elif r < 0:                      # a down day
+            if up > 0:
+                up_lengths.append(up)
+                up = 0
+            down += 1                          # the mirror image of the branch above
+        else:                            # NaN or exactly 0: ends whatever run is going
+            if up >0:
+                up_lengths.append(up)
+            if down > 0:
+                down_lengths.append(down)
+            up = down = 0                          # save any run that's going, then reset both to 0
+
+    # the run still going on the last day counts too
+    if up >0:
+        up_lengths.append(up)
+    if down > 0:
+        down_lengths.append(down)                                  # same as the else branch
+    return up_lengths, down_lengths
 
 
 def average_streaks(returns: pd.Series) -> tuple[float, float]:
     """(average up-run length, average down-run length). Use 0.0 when there are no runs."""
-    # TODO (Block 4, step 2)
-    raise NotImplementedError
+    up_lengths, down_lengths = streak_lengths(returns)
+    avg_up = sum(up_lengths) / len(up_lengths) if up_lengths else 0.0
+    avg_down = sum(down_lengths) / len(down_lengths) if down_lengths else 0.0                       # the same for down_lengths
+    return avg_up, avg_down
 
 
 def backtest_streaks(
@@ -60,8 +87,47 @@ def backtest_streaks(
     - equity: Series with the same index as prices: cash + shares * close at each day's close
     - trades: DataFrame with columns date, action ('buy', 'sell' or 'stop_loss'), price, value_after
     """
-    # TODO (Block 4, step 3)
-    raise NotImplementedError
+    returns = daily_returns(prices)
+    cash = start_cash
+    shares = 0.0
+    buy_price = None
+    up = down = 0
+    equity = []                    # portfolio value at each day's close
+    trades = []                    # one tuple per trade: (date, action, price, value_after)
+
+    for date, price, r in zip(prices.index, prices, returns):
+        # 1. Update the current runs (simpler than streak_lengths: just the counts)
+        if r > 0:
+            up += 1
+            down = 0
+        elif r < 0:
+            down += 1 
+            up = 0 
+        else:
+            up = down = 0
+
+        # 2. At most one trade per day, so use if / elif / elif
+        if shares == 0 and down >= buy_after:
+            shares = cash * (1-cost)/price         # cash * (1 - cost) / price
+            cash = 0.0
+            buy_price = price
+            trades.append((date, "buy", price, shares * price))
+        elif shares > 0 and stop_loss is not None and price <= buy_price * (1-stop_loss):   # buy_price * (1 - stop_loss)
+            cash = shares * price * (1-cost)             # shares * price * (1 - cost)
+            shares = 0.0
+            trades.append((date, "stop_loss", price, cash))
+        elif shares > 0 and up >= sell_after:
+            cash = shares * price * (1-cost)
+            shares = 0.0
+            trades.append((date,"sell",price,cash))
+                                # like the stop-loss branch, but the action is "sell"
+
+        # 3. Record today's value
+        equity.append(cash + shares * price)         # cash + shares * price
+
+    equity = pd.Series(equity, index=prices.index)
+    trades = pd.DataFrame(trades, columns=["date", "action", "price", "value_after"])
+    return equity, trades
 
 
 def buy_and_hold(prices: pd.Series, cost: float = 0.0, start_cash: float = 1000.0) -> pd.Series:
@@ -69,5 +135,5 @@ def buy_and_hold(prices: pd.Series, cost: float = 0.0, start_cash: float = 1000.
 
     Returns equity with the same index as prices.
     """
-    # TODO (Block 4, step 4)
-    raise NotImplementedError
+    shares = start_cash * (1-cost)/prices.iloc[0]
+    return prices * shares
