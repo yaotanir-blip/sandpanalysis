@@ -54,7 +54,7 @@ def main():
     fig, ax = plt.subplots(figsize=(10, 5))
     ax.plot(equity.index, equity, label="Streak strategy")
     ax.plot(bench.index, bench, label="Buy and hold")
-    ax.set_title(f"{config.SYMBOL}: Streak strategy vs buy and hold",f"{test.index[0].date()} to {test.index[-1].date()}")                            # e.g. what, which ticker, which period
+    ax.set_title(f"{config.SYMBOL}: Streak strategy vs buy and hold, {test.index[0].date()} to {test.index[-1].date()}")                            # e.g. what, which ticker, which period
     ax.set_ylabel("Value ($)")                           # SPY trades in dollars
     ax.legend()
     fig.savefig(config.RESULTS_DIR / "equity_test.png", dpi=150, bbox_inches="tight")

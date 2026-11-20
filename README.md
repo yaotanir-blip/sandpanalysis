@@ -1,10 +1,10 @@
 # sandpanalysis: S&P 500 data pipeline and backtest
 
-[One or two sentences in your own words: what this project does and why you built it.]
+This project analyses S&P 500 data to investigate whether buying after a losing streak beats the buy-and-hold method, using a test period of 1478 trading days of data. 
 
 ## Origins
 
-[Two or three sentences: you started Dionysus in Year 12 (2023) by scraping S&P 500 prices into Excel and testing whether losing streaks are followed by a rebound. Say what this version fixes.]
+My IB project involved scraping S&P 500 prices into an Excel spreadsheet and analysing whether losing streaks are followed by a rebound. This project uses the same idea to compare this method with a buy-and-hold strategy. In addition, it now uses the Tiingo API instead of scraping, and includes data quality checks.
 
 ## What it does
 
@@ -16,37 +16,34 @@
 
 ## Results
 
-Test period: [start] to [end]
+Test period: 4 Jan 2021 to 19 Nov 2026
 
 | | Streak strategy | Buy and hold |
 |---|---|---|
-| Total return | [ ] | [ ] |
-| Annualised return | [ ] | [ ] |
-| Maximum drawdown | [ ] | [ ] |
-| Number of trades | [ ] | 1 |
+| Total return | +45.0% | +109.6% |
+| Annualised return | 6.5% | 13.5% |
+| Maximum drawdown | -13.0% | -24.5% |
+| Number of trades | 219 | 1 |
 
 ![Equity curves on the test period](results/equity_test.png)
 
-[What you found, in two or three sentences.]
+Generally, buy-and-hold resulted in a higher return, about twice that of the streak strategy. However, the largest difference is in the maximum drawdown, which is better for the strategy. A key consideration is the cost of making a larger number of trades, as the `COST_PER_TRADE` parameter is set to 0.001 (0.1%). Changing this cost to 0 raises the return to 80%, which is a significant difference. 
 
 ## Data checks
 
-[What `find_problems` found on the real data, and what you did about it.]
+The data checks looked at whether the dates were in the right order, whether there were any duplicated rows, whether any cells for prices were missing, making sure prices were positive numbers, whether the daily change in the adjusted close was smaller than 20%, and making sure the rows had no more than a 5-day gap between trading days. 
 
 ## Assumptions
 
-- Prices: adjusted close, because [your reason].
+- Prices: adjusted close was used because it better reflects what real investors earned, by taking dividends and stock splits into account. 
 - Trades happen at the close of the day the signal appears.
-- Costs: [x]% of the trade value on every buy and sell, because [your reason].
-- Stop-loss: [x]% below the buy price.
-
-## Limitations
-
-[Your words. For example: one ticker, one test period, simple cost model.]
+- Costs: 0.1% of the trade value on every buy and sell, as it is a reasonable cost charged to a retail investor.
+- Stop-loss: 2% below the buy price.
+- Limitations: only one ticker was used, and one test period was chosen. This model also doesn't take into account any taxes involved in trading. `run_fetch.py` also has to be run after the market closes to keep the rows complete. 
 
 ## Next steps
 
-[ ]
+This model can be adjusted to analyse markets in several time intervals, and more trading methods can be compared alongside the buy-and-hold method already tested. 
 
 ## Run it yourself
 
