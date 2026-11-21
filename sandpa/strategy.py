@@ -1,9 +1,3 @@
-"""Block 4: the streak strategy from 2023-24, with its rules written down precisely.
-
-You write every function here. tests/test_strategy.py says when they're done.
-Assumption to mention in the README: trades happen at the close of the day the signal appears.
-"""
-
 from __future__ import annotations
 
 import pandas as pd
@@ -30,7 +24,7 @@ def streak_lengths(returns: pd.Series) -> tuple[list[int], list[int]]:
 
     for r in returns:
         if r > 0:                        # an up day
-            if down > 0:                 # so a down run has just ended: save it
+            if down > 0:                 
                 down_lengths.append(down)
                 down = 0
             up += 1
@@ -38,15 +32,15 @@ def streak_lengths(returns: pd.Series) -> tuple[list[int], list[int]]:
             if up > 0:
                 up_lengths.append(up)
                 up = 0
-            down += 1                          # the mirror image of the branch above
-        else:                            # NaN or exactly 0: ends whatever run is going
+            down += 1                          
+        else:                            
             if up >0:
                 up_lengths.append(up)
             if down > 0:
                 down_lengths.append(down)
-            up = down = 0                          # save any run that's going, then reset both to 0
+            up = down = 0                          
 
-    # the run still going on the last day counts too
+ 
     if up >0:
         up_lengths.append(up)
     if down > 0:
@@ -58,7 +52,7 @@ def average_streaks(returns: pd.Series) -> tuple[float, float]:
     """(average up-run length, average down-run length). Use 0.0 when there are no runs."""
     up_lengths, down_lengths = streak_lengths(returns)
     avg_up = sum(up_lengths) / len(up_lengths) if up_lengths else 0.0
-    avg_down = sum(down_lengths) / len(down_lengths) if down_lengths else 0.0                       # the same for down_lengths
+    avg_down = sum(down_lengths) / len(down_lengths) if down_lengths else 0.0                       
     return avg_up, avg_down
 
 
@@ -108,12 +102,12 @@ def backtest_streaks(
 
         # 2. At most one trade per day, so use if / elif / elif
         if shares == 0 and down >= buy_after:
-            shares = cash * (1-cost)/price         # cash * (1 - cost) / price
+            shares = cash * (1-cost)/price        
             cash = 0.0
             buy_price = price
             trades.append((date, "buy", price, shares * price))
-        elif shares > 0 and stop_loss is not None and price <= buy_price * (1-stop_loss):   # buy_price * (1 - stop_loss)
-            cash = shares * price * (1-cost)             # shares * price * (1 - cost)
+        elif shares > 0 and stop_loss is not None and price <= buy_price * (1-stop_loss):   
+            cash = shares * price * (1-cost)             
             shares = 0.0
             trades.append((date, "stop_loss", price, cash))
         elif shares > 0 and up >= sell_after:
@@ -123,7 +117,7 @@ def backtest_streaks(
                                 # like the stop-loss branch, but the action is "sell"
 
         # 3. Record today's value
-        equity.append(cash + shares * price)         # cash + shares * price
+        equity.append(cash + shares * price)         
 
     equity = pd.Series(equity, index=prices.index)
     trades = pd.DataFrame(trades, columns=["date", "action", "price", "value_after"])
