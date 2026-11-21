@@ -1,8 +1,3 @@
-"""Block 5: numbers that let you compare the strategy with buy-and-hold fairly.
-
-tests/test_metrics.py says when they're done.
-"""
-
 from __future__ import annotations
 
 import pandas as pd
