@@ -1,8 +1,3 @@
-"""Block 2: store prices in SQLite and read them back with SQL.
-
-You write create_table, save_prices and load_prices. tests/test_db.py says when they're done.
-"""
-
 from __future__ import annotations
 
 import sqlite3
@@ -46,11 +41,11 @@ def save_prices(conn: sqlite3.Connection, df: pd.DataFrame) -> int:
     - Use ? placeholders for values, never f-strings (look up "SQL injection").
     - Commit, then return how many new rows were actually inserted.
     """
-    sql = "INSERT OR IGNORE INTO prices VALUES(?,?,?,?,?,?,?,?)"                                                    # see below
+    sql = "INSERT OR IGNORE INTO prices VALUES(?,?,?,?,?,?,?,?)"                                             
     rows = df[PRICE_COLUMNS].itertuples(index=False, name=None)  # each row as a plain tuple
     cursor = conn.executemany(sql, rows)                         # runs the SQL once per row
     conn.commit()
-    return cursor.rowcount                                                   # see below
+    return cursor.rowcount                                              
 
 
 def load_prices(
