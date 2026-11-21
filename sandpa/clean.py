@@ -1,9 +1,3 @@
-"""Block 3: check the data before trusting any result.
-
-Your 2023-24 Year 1-5 files had day and month swapped on some rows and prices stored as text.
-These checks would have caught that. tests/test_clean.py says when they're done.
-"""
-
 from __future__ import annotations
 
 import pandas as pd
