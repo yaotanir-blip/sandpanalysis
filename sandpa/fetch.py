@@ -1,8 +1,3 @@
-"""Block 1: get daily prices from the Tiingo API.
-
-You write the two functions below. tests/test_fetch.py says when they're done.
-"""
-
 from __future__ import annotations
 
 import logging
@@ -56,7 +51,7 @@ def fetch_prices(
     if session is None:
         session = requests.Session()         # a real requests.Session()
     if api_key is None:
-        api_key = config.get_api_key()          # from config
+        api_key = config.get_api_key()         
 
     # 2. Build the request (same as explore_api.py, but using the function's inputs)
     url = f"{config.API_BASE_URL}/{symbol}/prices"
@@ -76,8 +71,8 @@ def fetch_prices(
             if response.status_code == 200:
                 return response.json()
             if response.status_code not in RETRY_STATUS_CODES:
-                raise FetchError(f'Failed with status{response.status_code}:{response.text}')           # include the status code and response.text
-            log.warning('Attempt %d got status %d, retrying',attempt+1,response.status_code)                    # a retryable status: say which one
+                raise FetchError(f'Failed with status{response.status_code}:{response.text}')           
+            log.warning('Attempt %d got status %d, retrying',attempt+1,response.status_code)                    
 
         # 5. Wait before the next attempt: backoff * 2 ** attempt seconds
         time.sleep(backoff * 2** attempt)
